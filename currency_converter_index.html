@@ -18,16 +18,11 @@
     body{
       margin:0; color:var(--text);
       font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(1200px 800px at 50% -10%, var(--bg2) 0%, var(--bg) 55%, #070b17 100%);
-      display:flex; align-items:center; justify-content:center;
-      padding:24px;
+      background: radial-gradient(1200px 800px at 50% -10%, var(--bg2) 0%, var(--bg) 55%, #070b17 100%);
+      display:flex; align-items:center; justify-content:center; padding:24px;
     }
     .wrap{ width:min(940px, 100%); display:grid; gap:16px }
-    .hero{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
-      padding:4px 4px 0;
-    }
+    .hero{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:4px 4px 0; }
     h1{margin:0; font-size:28px; letter-spacing:.2px}
     .muted{ color:var(--muted); margin:6px 0 0; font-size:14px }
     .badge{
@@ -38,20 +33,13 @@
 
     .card{
       background: color-mix(in oklab, var(--card) 85%, transparent);
-      border:1px solid var(--border);
-      border-radius:18px; padding:20px;
+      border:1px solid var(--border); border-radius:18px; padding:20px;
       box-shadow: 0 20px 60px rgba(0,0,0,.35);
       backdrop-filter: blur(8px);
     }
 
-    .grid{
-      display:grid; gap:14px;
-      grid-template-columns: 1fr 72px 1fr;
-    }
-    @media (max-width:720px){
-      .grid{ grid-template-columns: 1fr; }
-      .swap{ width:100% }
-    }
+    .grid{ display:grid; gap:14px; grid-template-columns: 1fr 72px 1fr; }
+    @media (max-width:720px){ .grid{ grid-template-columns: 1fr; } .swap{ width:100% } }
 
     .field{ display:flex; gap:10px; align-items:center }
     .input, .select{
@@ -83,9 +71,6 @@
     .error{ color:#ef4444; font-size:13px; margin-top:8px; display:none }
     .footer{ text-align:center; color:var(--muted); font-size:12px; margin-top:8px }
     a{ color:var(--accent) }
-
-    /* small helper row on mobile */
-    .stack{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
     .hint{ font-size:12px; color:var(--muted) }
   </style>
 </head>
@@ -123,11 +108,9 @@
       </div>
 
       <div class="row">
-        <div class="stack">
-          <span class="chip">Rate: <span class="rate" id="rateText">—</span></span>
-          <span class="chip" id="updated">Last updated: —</span>
-        </div>
-        <span class="hint">Tip: Type an amount, change currencies, or press the swap button.</span>
+        <div class="chip">Rate: <span class="rate" id="rateText">—</span></div>
+        <div class="chip" id="updated">Last updated: —</div>
+        <span class="hint">Type an amount, choose currencies, or press swap.</span>
       </div>
 
       <div id="error" class="error" role="alert"></div>
@@ -137,7 +120,7 @@
   </div>
 
   <script>
-    // ===== Live currency converter using frankfurter.app =====
+    // ===== Simple live currency converter using frankfurter.app =====
     // Endpoints:
     //  - Currencies: https://api.frankfurter.app/currencies
     //  - Convert:    https://api.frankfurter.app/latest?amount=AMT&from=USD&to=EUR
@@ -153,7 +136,6 @@
 
     let lastRate = null; // { rate, date, from, to }
 
-    // Load currency list
     async function loadCurrencies(){
       try{
         const res = await fetch('https://api.frankfurter.app/currencies');
@@ -165,7 +147,6 @@
           const opt2 = new Option(`${code} — ${name}`, code);
           ccyFrom.add(opt1); ccyTo.add(opt2);
         }
-        // sensible defaults
         ccyFrom.value = localStorage.getItem('ccyFrom') || 'USD';
         ccyTo.value   = localStorage.getItem('ccyTo')   || 'EUR';
       }catch(err){
@@ -174,7 +155,6 @@
       }
     }
 
-    // Convert using the API (server calculates using current rate)
     async function convert(){
       hideError();
       const amt = parseFloat(amountFrom.value || '0');
@@ -194,12 +174,10 @@
         const data = await res.json();
         const out = data.rates[to];
         amountTo.value = Number(out).toFixed(2);
-        // Unit rate (1 from -> x to)
-        const unitRate = out / amt;
+        const unitRate = out / amt; // 1 unit rate
         rateText.textContent = unitRate.toFixed(6) + ` (${from}→${to})`;
         updatedEl.textContent = `Last updated: ${data.date}`;
         lastRate = { rate: unitRate, date: data.date, from, to };
-        // store prefs
         localStorage.setItem('ccyFrom', from);
         localStorage.setItem('ccyTo', to);
       }catch(err){
@@ -222,21 +200,15 @@
     function showError(msg){ errorEl.textContent = msg; errorEl.style.display = 'block'; }
     function hideError(){ errorEl.style.display = 'none'; }
 
-    // Debounce user input to avoid spamming the API
     let deb;
     function debouncedConvert(){ clearTimeout(deb); deb = setTimeout(convert, 180); }
 
-    // Wire events
     amountFrom.addEventListener('input', debouncedConvert);
     ccyFrom.addEventListener('change', convert);
     ccyTo.addEventListener('change', convert);
     btnSwap.addEventListener('click', swap);
 
-    // Init
-    (async function init(){
-      await loadCurrencies();
-      convert();
-    })();
+    (async function init(){ await loadCurrencies(); convert(); })();
   </script>
 </body>
 </html>
