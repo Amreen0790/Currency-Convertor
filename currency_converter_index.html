@@ -1,112 +1,242 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Generate an HTML App on GitHub Pages – One-Page Guide</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  :root{--bg:#0b1220;--card:#0f172a;--text:#e5e7eb;--muted:#93a4b2;--accent:#22c55e;--border:#1f2937}
-  @media (prefers-color-scheme: light){
-    :root{--bg:#f6f7fb;--card:#ffffff;--text:#0f172a;--muted:#475569;--accent:#059669;--border:#e5e7eb}
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .wrap{max-width:920px;margin:32px auto;padding:24px}
-  h1{margin:0 0 6px;font-size:28px}
-  p.muted{margin:0 0 18px;color:var(--muted)}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:14px}
-  h2{font-size:20px;margin:0 0 10px}
-  ol, ul{margin:8px 0 0 20px}
-  code, pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  pre{background:#00000014;border:1px solid var(--border);border-radius:12px;padding:12px;overflow:auto}
-  .kbd{display:inline-block;border:1px solid var(--border);border-bottom-width:2px;border-radius:6px;padding:2px 6px;background:#00000010}
-  .callout{border-left:4px solid var(--accent);padding:10px 12px;background:#0000000a;border-radius:10px;margin-top:12px}
-  .pill{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:4px 10px;color:var(--muted);font-size:12px}
-  .grid{display:grid;gap:12px;grid-template-columns:1fr}
-  .footer{margin-top:16px;color:var(--muted);font-size:12px;text-align:center}
-  a{color:var(--accent)}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Currency Converter — Live Rates</title>
+  <meta name="description" content="Convert currencies using current exchange rates via Frankfurter API. No API key required." />
+  <style>
+    :root{
+      --bg:#0b1220; --bg2:#0d1224; --card:#0f172a; --text:#e6f1ff; --muted:#9fb0c7;
+      --accent:#22c55e; --accent2:#38bdf8; --border:#1e293b; --ring:#22c55e55;
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#f6f7fb; --bg2:#eef2ff; --card:#ffffff; --text:#0f172a; --muted:#475569; --border:#e5e7eb; --ring:#22c55e33 }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 800px at 50% -10%, var(--bg2) 0%, var(--bg) 55%, #070b17 100%);
+      display:flex; align-items:center; justify-content:center;
+      padding:24px;
+    }
+    .wrap{ width:min(940px, 100%); display:grid; gap:16px }
+    .hero{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      padding:4px 4px 0;
+    }
+    h1{margin:0; font-size:28px; letter-spacing:.2px}
+    .muted{ color:var(--muted); margin:6px 0 0; font-size:14px }
+    .badge{
+      align-self:flex-start; display:inline-flex; gap:8px; align-items:center;
+      padding:8px 12px; border:1px solid var(--border); border-radius:999px; color:var(--muted); font-size:12px;
+      backdrop-filter: blur(6px);
+    }
+
+    .card{
+      background: color-mix(in oklab, var(--card) 85%, transparent);
+      border:1px solid var(--border);
+      border-radius:18px; padding:20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      backdrop-filter: blur(8px);
+    }
+
+    .grid{
+      display:grid; gap:14px;
+      grid-template-columns: 1fr 72px 1fr;
+    }
+    @media (max-width:720px){
+      .grid{ grid-template-columns: 1fr; }
+      .swap{ width:100% }
+    }
+
+    .field{ display:flex; gap:10px; align-items:center }
+    .input, .select{
+      width:100%; padding:14px 14px;
+      border:1px solid var(--border); border-radius:14px;
+      background:linear-gradient(180deg, #0f172a, #0b1322);
+      color:var(--text); font-size:18px;
+      outline:none; transition: box-shadow .15s, border-color .15s, transform .05s;
+    }
+    .select{ max-width:180px }
+    .input:focus, .select:focus{ border-color:var(--accent); box-shadow:0 0 0 6px var(--ring) }
+    .input:active{ transform:scale(.997) }
+
+    .swap{
+      align-self:center; justify-self:center;
+      height:50px; width:72px; border-radius:14px;
+      border:1px solid var(--border); background:linear-gradient(180deg, #122036, #0e192c);
+      color:var(--text); cursor:pointer; display:grid; place-items:center;
+      box-shadow: inset 0 0 0 1px #0003;
+      transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .swap:hover{ border-color:var(--accent) }
+    .swap:active{ transform: translateY(1px) }
+    .swap svg{ width:24px; height:24px }
+
+    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-top:16px }
+    .chip{ display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border:1px solid var(--border); border-radius:999px; color:var(--muted); font-size:12px }
+    .rate{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:var(--accent2) }
+    .error{ color:#ef4444; font-size:13px; margin-top:8px; display:none }
+    .footer{ text-align:center; color:var(--muted); font-size:12px; margin-top:8px }
+    a{ color:var(--accent) }
+
+    /* small helper row on mobile */
+    .stack{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
+    .hint{ font-size:12px; color:var(--muted) }
+  </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Make & Publish an HTML App on GitHub Pages</h1>
-    <p class="muted">One-page, step-by-step instructions with a tiny input example and the expected output URL.</p>
-
-    <!-- INPUT -->
-    <section class="card">
-      <h2>A) Input (what you prepare)</h2>
-      <p>Create a file named <strong>index.html</strong> (lowercase, exact name). Start with this minimal page:</p>
-      <pre><code>&lt;!doctype html&gt;
-&lt;html&gt;
-  &lt;head&gt;
-    &lt;meta charset="utf-8" /&gt;
-    &lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;
-    &lt;title&gt;My Web App&lt;/title&gt;
-  &lt;/head&gt;
-  &lt;body&gt;
-    &lt;h1&gt;Hello, GitHub Pages!&lt;/h1&gt;
-    &lt;p&gt;If you see this online, your site works 🎉&lt;/p&gt;
-  &lt;/body&gt;
-&lt;/html&gt;</code></pre>
-      <p class="callout"><strong>Why “index.html”?</strong> GitHub Pages uses it as the default page when someone opens your site.</p>
-    </section>
-
-    <!-- PROCESS -->
-    <section class="card">
-      <h2>B) Process (what to click)</h2>
-      <ol>
-        <li><strong>Create a repository</strong><br>
-          Go to <span class="kbd">github.com</span> → click <span class="kbd">+</span> → <span class="kbd">New repository</span> → name it (e.g., <em>my-web-app</em>) → choose <strong>Public</strong> → <span class="kbd">Create repository</span>.
-        </li>
-        <li><strong>Upload your HTML</strong><br>
-          In the repo, click <span class="kbd">Add file</span> → <span class="kbd">Upload files</span> → drag in <strong>index.html</strong> (in the <em>root</em>, not inside a folder) → <span class="kbd">Commit changes</span>.
-        </li>
-        <li><strong>Enable GitHub Pages</strong><br>
-          Repo <span class="kbd">Settings</span> → left sidebar <span class="kbd">Pages</span> → <span class="kbd">Source</span> = <em>Deploy from a branch</em> → <span class="kbd">Branch</span> = <em>main</em>, <span class="kbd">Folder</span> = <em>/ (root)</em> → <span class="kbd">Save</span>.
-        </li>
-        <li><strong>Wait for deploy</strong><br>
-          Give it ~30–90 seconds. A green banner or the Pages panel will show your site link.
-        </li>
-      </ol>
-    </section>
-
-    <!-- OUTPUT -->
-    <section class="card">
-      <h2>C) Output (what you get)</h2>
-      <p>Your public website URL will look like:</p>
-      <pre><code>https://&lt;your-username&gt;.github.io/&lt;your-repo-name&gt;/</code></pre>
-      <p>Open that link — you should see <strong>Hello, GitHub Pages!</strong>.</p>
-      <div class="grid">
-        <span class="pill">Input: index.html</span>
-        <span class="pill">Output: GitHub Pages URL</span>
+    <div class="hero">
+      <div>
+        <h1>Currency Converter</h1>
+        <p class="muted">Live rates from <a href="https://www.frankfurter.app/" target="_blank" rel="noopener">Frankfurter</a>. No API key. Works on GitHub Pages.</p>
       </div>
-    </section>
+      <span class="badge">Secure client-side • Auto-update</span>
+    </div>
 
-    <!-- UPDATE -->
     <section class="card">
-      <h2>D) Update later</h2>
-      <ul>
-        <li>Edit <code>index.html</code> (or add <code>style.css</code>, <code>app.js</code>), then <strong>Commit</strong> again.</li>
-        <li>Pages redeploys automatically. Refresh your site URL.</li>
-      </ul>
-      <pre><code>&lt;link rel="stylesheet" href="style.css"&gt;
-&lt;script src="app.js" defer&gt;&lt;/script&gt;
-&lt;img src="logo.png" alt="logo"&gt;</code></pre>
+      <div class="grid" role="group" aria-label="Currency conversion form">
+        <!-- From -->
+        <div class="field" aria-label="From amount and currency">
+          <input id="amountFrom" class="input" type="number" min="0" step="0.01" value="1" aria-label="Amount to convert" />
+          <select id="ccyFrom" class="select" aria-label="From currency"></select>
+        </div>
+
+        <!-- Swap -->
+        <button id="btnSwap" class="swap" title="Swap" aria-label="Swap currencies">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 7h14M7 7l3-3m-3 3l3 3"></path>
+            <path d="M17 17H3m14 0l-3-3m3 3l-3 3"></path>
+          </svg>
+        </button>
+
+        <!-- To -->
+        <div class="field" aria-label="To amount and currency">
+          <input id="amountTo" class="input" type="number" min="0" step="0.01" value="" aria-label="Converted amount" />
+          <select id="ccyTo" class="select" aria-label="To currency"></select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="stack">
+          <span class="chip">Rate: <span class="rate" id="rateText">—</span></span>
+          <span class="chip" id="updated">Last updated: —</span>
+        </div>
+        <span class="hint">Tip: Type an amount, change currencies, or press the swap button.</span>
+      </div>
+
+      <div id="error" class="error" role="alert"></div>
     </section>
 
-    <!-- TROUBLESHOOT -->
-    <section class="card">
-      <h2>E) Common mistakes (fast fixes)</h2>
-      <ul>
-        <li><strong>Filename</strong> must be <code>index.html</code> (not <em>Index.html</em> or <em>index.html.txt</em>).</li>
-        <li><strong>Location</strong>: put it in the <em>root</em> of the branch you publish.</li>
-        <li><strong>Branch</strong>: Pages must point to the branch that has your file (usually <code>main</code>).</li>
-        <li><strong>Delay</strong>: wait a minute and hard refresh (<kbd>Ctrl/⌘ + Shift + R</kbd>).</li>
-        <li><strong>Private repos</strong>: use <em>Public</em> while learning for simplest setup.</li>
-      </ul>
-    </section>
-
-    <p class="footer">Tip: If Pages is tricky, try <a href="https://drop.netlify.com" target="_blank" rel="noopener">Netlify Drop</a> — drag in <code>index.html</code> for an instant live link.</p>
+    <div class="footer">Publish as <code>index.html</code> on GitHub Pages. (Client fetches fresh rates.)</div>
   </div>
+
+  <script>
+    // ===== Live currency converter using frankfurter.app =====
+    // Endpoints:
+    //  - Currencies: https://api.frankfurter.app/currencies
+    //  - Convert:    https://api.frankfurter.app/latest?amount=AMT&from=USD&to=EUR
+
+    const amountFrom = document.getElementById('amountFrom');
+    const amountTo   = document.getElementById('amountTo');
+    const ccyFrom    = document.getElementById('ccyFrom');
+    const ccyTo      = document.getElementById('ccyTo');
+    const btnSwap    = document.getElementById('btnSwap');
+    const rateText   = document.getElementById('rateText');
+    const updatedEl  = document.getElementById('updated');
+    const errorEl    = document.getElementById('error');
+
+    let lastRate = null; // { rate, date, from, to }
+
+    // Load currency list
+    async function loadCurrencies(){
+      try{
+        const res = await fetch('https://api.frankfurter.app/currencies');
+        if(!res.ok) throw new Error('Failed to load currencies');
+        const data = await res.json();
+        const entries = Object.entries(data).sort((a,b)=>a[0].localeCompare(b[0]));
+        for(const [code,name] of entries){
+          const opt1 = new Option(`${code} — ${name}`, code);
+          const opt2 = new Option(`${code} — ${name}`, code);
+          ccyFrom.add(opt1); ccyTo.add(opt2);
+        }
+        // sensible defaults
+        ccyFrom.value = localStorage.getItem('ccyFrom') || 'USD';
+        ccyTo.value   = localStorage.getItem('ccyTo')   || 'EUR';
+      }catch(err){
+        showError('Could not load currency list. Are you offline?');
+        console.error(err);
+      }
+    }
+
+    // Convert using the API (server calculates using current rate)
+    async function convert(){
+      hideError();
+      const amt = parseFloat(amountFrom.value || '0');
+      const from = ccyFrom.value; const to = ccyTo.value;
+      if(!from || !to || isNaN(amt)) return;
+      if(from === to){
+        amountTo.value = amt.toFixed(2);
+        rateText.textContent = '1.000000';
+        updatedEl.textContent = 'Last updated: — (same currency)';
+        lastRate = { rate:1, date: new Date().toISOString().slice(0,10), from, to };
+        return;
+      }
+      try{
+        const url = `https://api.frankfurter.app/latest?amount=${encodeURIComponent(amt)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Rate fetch failed');
+        const data = await res.json();
+        const out = data.rates[to];
+        amountTo.value = Number(out).toFixed(2);
+        // Unit rate (1 from -> x to)
+        const unitRate = out / amt;
+        rateText.textContent = unitRate.toFixed(6) + ` (${from}→${to})`;
+        updatedEl.textContent = `Last updated: ${data.date}`;
+        lastRate = { rate: unitRate, date: data.date, from, to };
+        // store prefs
+        localStorage.setItem('ccyFrom', from);
+        localStorage.setItem('ccyTo', to);
+      }catch(err){
+        console.error(err);
+        showError('Could not fetch live rate. Showing last cached result if available.');
+        if(lastRate){
+          amountTo.value = (parseFloat(amountFrom.value||'0') * lastRate.rate).toFixed(2);
+          rateText.textContent = lastRate.rate.toFixed(6) + ` (${lastRate.from}→${lastRate.to})`;
+          updatedEl.textContent = `Last updated (cached): ${lastRate.date}`;
+        }
+      }
+    }
+
+    function swap(){
+      const a = ccyFrom.value, b = ccyTo.value;
+      ccyFrom.value = b; ccyTo.value = a;
+      convert();
+    }
+
+    function showError(msg){ errorEl.textContent = msg; errorEl.style.display = 'block'; }
+    function hideError(){ errorEl.style.display = 'none'; }
+
+    // Debounce user input to avoid spamming the API
+    let deb;
+    function debouncedConvert(){ clearTimeout(deb); deb = setTimeout(convert, 180); }
+
+    // Wire events
+    amountFrom.addEventListener('input', debouncedConvert);
+    ccyFrom.addEventListener('change', convert);
+    ccyTo.addEventListener('change', convert);
+    btnSwap.addEventListener('click', swap);
+
+    // Init
+    (async function init(){
+      await loadCurrencies();
+      convert();
+    })();
+  </script>
 </body>
 </html>
