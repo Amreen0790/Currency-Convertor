@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Currency Converter — Live Rates</title>
+  <meta name="description" content="Convert currencies using current exchange rates via Frankfurter API. No API key required." />
+  <style>
+    :root{--bg:#0b1220;--panel:#0f172a;--text:#e5e7eb;--muted:#93a4b2;--accent:#22c55e;--border:#1f2937}
+    @media (prefers-color-scheme: light){:root{--bg:#f6f7fb;--panel:#ffffff;--text:#0f172a;--muted:#475569;--accent:#059669;--border:#e5e7eb}}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:900px;margin:32px auto;padding:24px}
+    h1{margin:0 0 6px;font-size:26px}
+    p.muted{margin:0 0 16px;color:var(--muted)}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .grid{display:grid;gap:12px;grid-template-columns:1fr 90px 1fr}
+    .field{display:flex;gap:8px}
+    .field input{flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:18px}
+    .field select{width:130px;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text)}
+    .swap{align-self:center;justify-self:center;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:12px;padding:10px 12px;cursor:pointer}
+    .swap:hover{border-color:var(--accent)}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
+    .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:12px}
+    .rate{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .error{color:#ef4444}
+    .small{font-size:12px;color:var(--muted)}
+    .footer{margin-top:16px;font-size:12px;color:var(--muted);text-align:center}
+    a{color:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Currency Converter</h1>
+    <p class="muted">Live rates powered by <a href="https://www.frankfurter.app/" target="_blank" rel="noopener">Frankfurter API</a>. No API key needed.
+      Works on GitHub Pages.</p>
+
+    <section class="card">
+      <div class="grid">
+        <div class="field">
+          <input id="amountFrom" type="number" min="0" step="0.01" value="1" aria-label="Amount to convert" />
+          <select id="ccyFrom" aria-label="From currency"></select>
+        </div>
+        <button id="btnSwap" class="swap" title="Swap">⇅</button>
+        <div class="field">
+          <input id="amountTo" type="number" min="0" step="0.01" value="" aria-label="Converted amount" />
+          <select id="ccyTo" aria-label="To currency"></select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div id="rateLine" class="small">Rate — <span class="rate" id="rateText">…</span></div>
+        <div class="badge" id="updated">Last updated: —</div>
+      </div>
+
+      <div id="error" class="small error" role="alert" style="display:none"></div>
+    </section>
+
+    <div class="footer">Tip: Publish this file as <code>index.html</code> on GitHub Pages. It fetches fresh rates client‑side.</div>
+  </div>
+
+  <script>
+    // ===== Simple live currency converter using frankfurter.app =====
+    // Endpoints:
+    //  - Currencies: https://api.frankfurter.app/currencies
+    //  - Convert:    https://api.frankfurter.app/latest?amount=AMT&from=USD&to=EUR
+
+    const amountFrom = document.getElementById('amountFrom');
+    const amountTo   = document.getElementById('amountTo');
+    const ccyFrom    = document.getElementById('ccyFrom');
+    const ccyTo      = document.getElementById('ccyTo');
+    const btnSwap    = document.getElementById('btnSwap');
+    const rateText   = document.getElementById('rateText');
+    const updatedEl  = document.getElementById('updated');
+    const errorEl    = document.getElementById('error');
+
+    let lastRate = null; // { rate, date, from, to }
+
+    // Load currency list
+    async function loadCurrencies(){
+      try{
+        const res = await fetch('https://api.frankfurter.app/currencies');
+        if(!res.ok) throw new Error('Failed to load currencies');
+        const data = await res.json();
+        const entries = Object.entries(data).sort((a,b)=>a[0].localeCompare(b[0]));
+        for(const [code,name] of entries){
+          const opt1 = new Option(`${code} — ${name}`, code);
+          const opt2 = new Option(`${code} — ${name}`, code);
+          ccyFrom.add(opt1); ccyTo.add(opt2);
+        }
+        // sensible defaults
+        ccyFrom.value = localStorage.getItem('ccyFrom') || 'USD';
+        ccyTo.value   = localStorage.getItem('ccyTo')   || 'EUR';
+      }catch(err){
+        showError('Could not load currency list. Are you offline?');
+        console.error(err);
+      }
+    }
+
+    // Convert using the API (server calculates using current rate)
+    async function convert(){
+      hideError();
+      const amt = parseFloat(amountFrom.value || '0');
+      const from = ccyFrom.value; const to = ccyTo.value;
+      if(!from || !to || isNaN(amt)) return;
+      if(from === to){
+        amountTo.value = amt.toFixed(2);
+        rateText.textContent = '1.0000';
+        updatedEl.textContent = 'Last updated: — (same currency)';
+        lastRate = { rate:1, date: new Date().toISOString().slice(0,10), from, to };
+        return;
+      }
+      try{
+        const url = `https://api.frankfurter.app/latest?amount=${encodeURIComponent(amt)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Rate fetch failed');
+        const data = await res.json();
+        const out = data.rates[to];
+        amountTo.value = Number(out).toFixed(2);
+        // To get unit rate (1 from -> x to), fetch for amount=1 or divide
+        const unitRate = out / amt;
+        rateText.textContent = unitRate.toFixed(6) + ` (${from}→${to})`;
+        updatedEl.textContent = `Last updated: ${data.date}`;
+        lastRate = { rate: unitRate, date: data.date, from, to };
+        // store prefs
+        localStorage.setItem('ccyFrom', from);
+        localStorage.setItem('ccyTo', to);
+      }catch(err){
+        console.error(err);
+        showError('Could not fetch live rate. Showing last cached result if available.');
+        if(lastRate){
+          amountTo.value = (parseFloat(amountFrom.value||'0') * lastRate.rate).toFixed(2);
+          rateText.textContent = lastRate.rate.toFixed(6) + ` (${lastRate.from}→${lastRate.to})`;
+          updatedEl.textContent = `Last updated (cached): ${lastRate.date}`;
+        }
+      }
+    }
+
+    function swap(){
+      const a = ccyFrom.value, b = ccyTo.value;
+      ccyFrom.value = b; ccyTo.value = a;
+      convert();
+    }
+
+    function showError(msg){ errorEl.textContent = msg; errorEl.style.display = 'block'; }
+    function hideError(){ errorEl.style.display = 'none'; }
+
+    // Debounce user input to avoid spamming the API
+    let deb;
+    function debouncedConvert(){ clearTimeout(deb); deb = setTimeout(convert, 180); }
+
+    // Wire events
+    amountFrom.addEventListener('input', debouncedConvert);
+    ccyFrom.addEventListener('change', convert);
+    ccyTo.addEventListener('change', convert);
+    btnSwap.addEventListener('click', swap);
+
+    // Init
+    (async function init(){
+      await loadCurrencies();
+      convert();
+    })();
+  </script>
+</body>
+</html>
